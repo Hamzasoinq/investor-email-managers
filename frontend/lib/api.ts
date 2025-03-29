@@ -151,27 +151,6 @@ const api = {
     }
   },
 
-  sequences: {
-    addLead: async (email: string, sequenceId: string) => {
-      const response = await axiosInstance.post('/api/leads/sequence', null, {
-        params: { email, sequence_id: sequenceId }
-      })
-      return response.data
-    }
-  },
-
-  tags: {
-    list: async () => {
-      const response = await axiosInstance.get('/api/tags')
-      return response.data
-    },
-
-    update: async (data: { email: string; campaign_id: string; tags: string[] }) => {
-      const response = await axiosInstance.post('/api/tags', data)
-      return response.data
-    }
-  },
-
   analytics: {
     get: async (campaignId?: string) => {
       const response = await axiosInstance.get('/api/analytics', {

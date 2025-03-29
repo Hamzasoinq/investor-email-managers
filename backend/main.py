@@ -145,37 +145,6 @@ async def get_campaigns():
         logger.error(f"Error in get_campaigns endpoint: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/api/leads/sequence")
-async def add_to_sequence(email: EmailStr, sequence_id: str):
-    """Add a lead to a sequence"""
-    try:
-        return await pipl_api.add_lead_to_sequence(email, sequence_id)
-    except Exception as e:
-        logger.error(f"Error in add_to_sequence endpoint: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.get("/api/tags")
-async def get_tags():
-    """Get all tags"""
-    try:
-        return await pipl_api.get_tags()
-    except Exception as e:
-        logger.error(f"Error in get_tags endpoint: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/api/tags")
-async def update_tags(request: TagRequest):
-    """Update lead tags"""
-    try:
-        return await pipl_api.update_lead(
-            email=request.email,
-            campaign_id=request.campaign_id,
-            variables={"tags": request.tags}
-        )
-    except Exception as e:
-        logger.error(f"Error in update_tags endpoint: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
 @app.get("/api/analytics")
 async def get_analytics(campaign_id: Optional[str] = None):
     """Get campaign analytics"""

@@ -48,9 +48,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const navItems = [
     { href: '/inbox', icon: InboxIcon, label: 'Inbox' },
     { href: '/sent', icon: PaperAirplaneIcon, label: 'Sent' },
-    { href: '/tags', icon: TagIcon, label: 'Tags' },
     { href: '/contacts', icon: UserGroupIcon, label: 'Contacts' },
-    { href: '/sequences', icon: PlayIcon, label: 'Sequences' },
   ]
 
   return (
