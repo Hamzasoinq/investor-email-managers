@@ -1,0 +1,294 @@
+openapi: 3.0.3
+info:
+  title: EmailBison API
+  description: |
+    EmailBison API provides email management capabilities including inbox synchronization, 
+    email sending, and automated sequence management for investor communications.
+  version: '1.0.0'
+  contact:
+    name: EmailBison Support
+    url: https://emailbison.com/support
+    email: support@emailbison.com
+
+servers:
+  - url: https://api.emailbison.com/v1
+    description: EmailBison API Production Server
+
+security:
+  - BearerAuth: []
+
+paths:
+  /emails:
+    get:
+      summary: Get emails from specified folder
+      description: Retrieves emails from a specified folder (inbox, sent, archived)
+      parameters:
+        - name: folder
+          in: query
+          description: Email folder to fetch from
+          required: false
+          schema:
+            type: string
+            enum: [inbox, sent, archived]
+            default: inbox
+      responses:
+        '200':
+          description: List of emails successfully retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Email'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /send:
+    post:
+      summary: Send an email
+      description: Sends an email to specified recipient
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendEmailRequest'
+      responses:
+        '200':
+          description: Email sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SendEmailResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /sequences:
+    post:
+      summary: Create a follow-up sequence
+      description: Creates a new follow-up sequence with multiple steps
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSequenceRequest'
+      responses:
+        '201':
+          description: Sequence created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sequence'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /sequences/{sequence_id}/contacts:
+    post:
+      summary: Add contact to sequence
+      description: Adds a contact to an existing follow-up sequence
+      parameters:
+        - name: sequence_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddToSequenceRequest'
+      responses:
+        '200':
+          description: Contact added to sequence successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SequenceStatus'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          description: Sequence not found
+
+  /sequences/{sequence_id}/contacts/{contact_email}:
+    get:
+      summary: Get sequence status for contact
+      description: Retrieves the current status of a contact in a sequence
+      parameters:
+        - name: sequence_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: contact_email
+          in: path
+          required: true
+          schema:
+            type: string
+            format: email
+      responses:
+        '200':
+          description: Sequence status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SequenceStatus'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          description: Sequence or contact not found
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Email:
+      type: object
+      properties:
+        id:
+          type: string
+        subject:
+          type: string
+        body:
+          type: string
+        sender_email:
+          type: string
+          format: email
+        recipient_email:
+          type: string
+          format: email
+        status:
+          type: string
+          enum: [inbox, sent, archived]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    SendEmailRequest:
+      type: object
+      required:
+        - to
+        - subject
+        - body
+      properties:
+        to:
+          type: string
+          format: email
+        subject:
+          type: string
+        body:
+          type: string
+
+    SendEmailResponse:
+      type: object
+      properties:
+        message_id:
+          type: string
+        status:
+          type: string
+        sent_at:
+          type: string
+          format: date-time
+
+    CreateSequenceRequest:
+      type: object
+      required:
+        - name
+        - steps
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/SequenceStep'
+
+    SequenceStep:
+      type: object
+      required:
+        - delay_days
+        - subject
+        - body
+        - order
+      properties:
+        delay_days:
+          type: integer
+          minimum: 0
+        subject:
+          type: string
+        body:
+          type: string
+        order:
+          type: integer
+          minimum: 1
+
+    Sequence:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/SequenceStep'
+
+    AddToSequenceRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+
+    SequenceStatus:
+      type: object
+      properties:
+        sequence_id:
+          type: string
+        contact_email:
+          type: string
+          format: email
+        current_step:
+          type: integer
+        status:
+          type: string
+          enum: [active, completed, paused, stopped]
+        next_send_date:
+          type: string
+          format: date-time
+        last_interaction:
+          type: string
+          format: date-time
+
+  responses:
+    UnauthorizedError:
+      description: Authentication information is missing or invalid
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: Unauthorized access 
